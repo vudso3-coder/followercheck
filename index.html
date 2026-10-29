@@ -24,10 +24,10 @@
 (() => {
   "use strict";
   const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+  const SUPABASE_ANON_KEY = "sb_publishable_eWjnhcHdWczjdbbYeORc-w_w5KefkYe";
   const configured = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL) &&
                     !SUPABASE_URL.includes("YOUR-PROJECT") &&
-                    SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY";
+                    SUPABASE_ANON_KEY !== "sb_publishable_eWjnhcHdWczjdbbYeORc-w_w5KefkYe";
   const $ = id => document.getElementById(id);
   const say = (message, isError=false) => { $("loginStatus").textContent=message; $("loginStatus").classList.toggle("error",isError); };
   if (!configured || !window.supabase) {

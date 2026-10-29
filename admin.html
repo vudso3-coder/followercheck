@@ -13,7 +13,7 @@
 <script>
 (() => {
 "use strict";
-const SUPABASE_URL="https://YOUR-PROJECT.supabase.co", SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL="https://lfrfpsehwhlcuoxdhhbw.supabase.co", SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY";
 const configured=/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL)&&!SUPABASE_URL.includes("YOUR-PROJECT")&&SUPABASE_ANON_KEY!=="YOUR_SUPABASE_ANON_KEY";
 const $=id=>document.getElementById(id), status=(id,msg,err=false)=>{$(id).textContent=msg;$(id).classList.toggle("danger",err)};
 if(!configured||!window.supabase){$("login").disabled=true;$("signup").disabled=true;status("status","설정 전이라 인증할 수 없습니다. README 설정을 완료해 주세요.",true);return;}
