@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>친구 전용 링크</title>
+<style>
+:root{color-scheme:light;--bg:#f6f4fb;--card:#fff;--ink:#282438;--muted:#777187;--accent:#7865c8;--line:#e8e3f2;--bad:#b3261e;--good:#287a4b}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(140deg,#f4efff,#f9f7fc 55%,#f2f5ff);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);display:grid;place-items:center;padding:20px}
+main{width:min(100%,560px)}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:clamp(20px,5vw,32px);box-shadow:0 16px 50px #43356b12}
+h1{font-size:1.55rem;margin:0 0 8px}p{line-height:1.65;color:var(--muted)}label{display:block;font-weight:650;margin:18px 0 8px}
+input,textarea{width:100%;border:1px solid #d8d1e8;border-radius:12px;padding:13px 14px;font:inherit;color:var(--ink);background:white}
+textarea{min-height:150px;resize:vertical}button,.linkbtn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;transition:opacity .15s ease}
+button:disabled{opacity:.55;cursor:not-allowed}
+button.primary,.linkbtn{background:var(--accent);color:white}button.secondary{background:#eeeaf7;color:var(--ink)}button.danger{background:#fdeceb;color:var(--bad)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #b7a8f2;outline-offset:2px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.status{margin-top:16px;padding:12px 14px;border-radius:12px;background:#f4f1fa;color:var(--ink);white-space:pre-wrap}.status.error{background:#fff0ef;color:var(--bad)}.status.success{background:#edf8f0;color:var(--good)}
+.hidden{display:none!important}.small{font-size:.86rem}.divider{border:0;border-top:1px solid var(--line);margin:24px 0}.admin-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.tag{font-size:.76rem;background:#eeeaf7;padding:5px 9px;border-radius:99px;color:#5d4ca4;display:inline-block;margin-bottom:8px;font-weight:700}
+.badge-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.usage-pill{font-size:.82rem;background:#eeeaf7;color:#4a3a8a;padding:5px 11px;border-radius:99px;font-weight:650}
+.usage-list{max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:#faf9fd;font-size:.88rem;margin-top:8px}
+.usage-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed #e8e3f2;flex-wrap:wrap}
+.usage-item:last-child{border-bottom:0}
+.usage-btns{display:flex;gap:6px;align-items:center}
+.tiny-btn{padding:6px 10px;font-size:.78rem;border-radius:8px;background:#eeeaf7;color:var(--ink);font-weight:650}
+.tiny-btn.reset{background:#fdeceb;color:var(--bad)}
+</style>
+</head>
+<body>
+<main>
+<section class="card" id="gate">
+  <div class="tag">FOLLOWER CHECK</div>
+  <h1>친구 전용 링크</h1>
+  <p>등록된 X 아이디를 입력해 주세요. @는 붙여도 되고 생략해도 됩니다.</p>
+  <form id="gateForm">
+    <label for="handle">X 아이디</label>
+    <input id="handle" autocomplete="username" placeholder="@your_id" required="" maxlength="80">
+    <div class="actions"><button id="submitBtn" class="primary" type="submit">확인하고 입장하기</button></div>
+  </form>
+  <div id="gateStatus" class="status error" role="status" aria-live="polite">목록에서 아이디를 찾지 못했어요. @를 빼고 다시 확인하거나 관리자에게 등록을 요청해 주세요.</div>
+  <div id="destination" class="hidden">
+    <div class="badge-row">
+      <span id="usageBadge" class="usage-pill">@test0000 · 접속 1/3회 (남은 횟수 2회)</span>
+    </div>
+    <p>아이디가 목록에 있어요.</p>
+    <a id="externalLinkBtn" class="linkbtn" href="https://vudso3-coder.github.io/talkstory/" target="_blank" rel="noopener noreferrer">톡스토리 열기 ↗</a>
+  </div>
+  <p class="small">아이디가 목록에 없거나 접속 가능 횟수를 모두 소진했다면 관리자에게 요청해 주세요.</p>
+  <hr class="divider">
+  <details open="">
+    <summary>관리자: 팔로워 목록 및 접속 횟수 관리</summary>
+    <p class="small">X 아이디를 한 줄에 하나씩 입력하세요. 수정한 뒤 아래 버튼으로 새 HTML 파일을 내려받아 GitHub Pages에 다시 올리면 모두에게 반영됩니다.</p>
+    <label for="adminPass">관리자 비밀번호</label>
+    <input id="adminPass" type="password" placeholder="관리자 비밀번호">
+    <div class="actions"><button id="unlock" class="secondary" type="button">관리자 편집 열기</button></div>
+    <div id="adminGateStatus" class="status error" role="status" aria-live="polite"></div>
+    <div id="adminPanel" class="">
+      <label for="defaultLimitInput">1인당 기본 접속 허용 횟수 (크롬·엣지·모바일 통합 카운트)</label>
+      <input id="defaultLimitInput" type="number" min="1" max="999" value="3">
+      <p class="small" style="margin:8px 0 0">💡 특정 아이디만 횟수를 다르게 주려면 아이디 뒤에 <code>:숫자</code>를 붙이세요. (예: <code>bboldda99_:5</code>)</p>
+
+      <label for="handles">허용할 X 아이디 (한 줄에 하나씩)</label>
+      <textarea id="handles" spellcheck="false" placeholder="example_id
+another_id:5"></textarea>
+
+      <label for="searchHandleInput">아이디별 접속 횟수 확인 및 개별 초기화</label>
+      <input id="searchHandleInput" type="text" placeholder="초기화할 아이디 검색 (예: bboldda99)">
+      <div id="usageSummaryList" class="usage-list"><div class="usage-item"><span>@vo8gpxp3x2ragrb (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@bboldda99_ (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@bboldda99 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@56shiro7 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@boguri5 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@97z44 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@bllk_kiwi (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@love_mihya1225 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@o0mi_yasan (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@nagichangman (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@nice_122541 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@itoshi_love_sio (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@icherishyou0219 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@muuuue1234 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@muri1vm (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@melon_mmd (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@1xurin9 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@shushu_hioring (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@divineananke (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@iyrw3k (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@wsmsx (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@kimbaki0815 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@googoo_8121 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@bbbaaaaaam (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@nisu_lock (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@chikk_1010 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@rincherrynyan (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@my4ngo1st (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@min332332 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@fordezember25 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@26mkbday (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@_ahwlgk (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@feqdmt (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@ring2_1223 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@o3vio (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@kiikun_chan (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@yoru090917 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@rnchinchung (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@chyifrdo (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@ue_022 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@ivoryro0 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@gyoong9evo (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@graziosoja8396 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@s0lbangwul (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@s0namu_s01 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@qkxopr (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@lynnrin1oxo (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@hunyong190_ (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@mylov_s2 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@bluelock_pwc (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@bururo8008_cham (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@toman8008_cham (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@juju8008_cham (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@blulo_goods (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div><div class="usage-item"><span>@test0000 (허용 3회)</span><div class="usage-btns"><button type="button" class="tiny-btn">횟수 조회</button><button type="button" class="tiny-btn reset">초기화</button></div></div></div>
+      <div class="actions" style="margin-top:10px">
+        <button id="resetAllCountsBtn" class="danger" type="button">전체 아이디 접속 횟수 일괄 초기화</button>
+      </div>
+
+      <div class="actions" style="margin-top:18px">
+        <button id="saveDownload" class="primary" type="button">목록 반영한 HTML 다운로드</button>
+        <button id="cancelAdmin" class="secondary" type="button">닫기</button>
+      </div>
+      <div id="adminStatus" class="status success" role="status" aria-live="polite">전체 아이디의 접속 횟수가 모든 브라우저에서 0회로 초기화되었습니다.</div>
+    </div>
+  </details>
+</section>
+</main>
+<script>
+/*
+  설정 안내:
+  1) 아래 ADMIN_PASSWORD를 본인이 사용할 값으로 바꾸세요.
+  2) DEFAULT_MAX_USES는 아이디당 기본 최대 접속 가능 횟수입니다.
+  3) 크롬/엣지/모바일 등 브라우저가 달라도 횟수가 통합 계산되도록 외부 카운터 API(Abacus)를 함께 사용합니다.
+     관리자 메뉴에서 아이디별 [횟수 초기화]를 누르면 모든 브라우저에서 해당 아이디의 횟수가 즉시 0으로 리셋됩니다.
+*/
+const ADMIN_PASSWORD = "myang0426";
+const DEFAULT_MAX_USES = 3;
+const RESET_EPOCH = 2;
+const COUNTER_NAMESPACE = "vudso3_talkstory_gate_v2";
+const ABACUS_BASE = "https://abacus.jasoncameron.dev";
+const ALLOWED_HANDLES = [
+  "vo8gpxp3x2ragrb",
+  "bboldda99_",
+  "bboldda99",
+  "56shiro7",
+  "boguri5",
+  "97z44",
+  "bllk_kiwi",
+  "love_mihya1225",
+  "o0mi_yasan",
+  "nagichangman",
+  "nice_122541",
+  "itoshi_love_sio",
+  "icherishyou0219",
+  "muuuue1234",
+  "muri1vm",
+  "melon_mmd",
+  "1xurin9",
+  "shushu_hioring",
+  "divineananke",
+  "iyrw3k",
+  "wsmsx",
+  "kimbaki0815",
+  "googoo_8121",
+  "bbbaaaaaam",
+  "nisu_lock",
+  "chikk_1010",
+  "rincherrynyan",
+  "my4ngo1st",
+  "min332332",
+  "fordezember25",
+  "26mkbday",
+  "_ahwlgk",
+  "feqdmt",
+  "ring2_1223",
+  "o3vio",
+  "kiikun_chan",
+  "yoru090917",
+  "rnchinchung",
+  "chyifrdo",
+  "ue_022",
+  "ivoryro0",
+  "gyoong9evo",
+  "graziosoja8396",
+  "s0lbangwul",
+  "s0namu_s01",
+  "qkxopr",
+  "lynnrin1oxo",
+  "hunyong190_",
+  "mylov_s2",
+  "bluelock_pwc",
+  "bururo8008_cham",
+  "toman8008_cham",
+  "juju8008_cham",
+  "blulo_goods",
+  "test0000"
+];
+const TARGET_URL = "https://vudso3-coder.github.io/talkstory/";
+
+let adminUnlocked = false;
+let currentDefaultMaxUses = Number(DEFAULT_MAX_USES) > 0 ? Number(DEFAULT_MAX_USES) : 3;
+let currentResetEpoch = Number(RESET_EPOCH) || 1;
+let memoryUsageStore = {};
+let cachedCounts = {};
+
+const $ = id => document.getElementById(id);
+$("adminPanel").classList.add("hidden");
+
+const normalize = s => s.trim().replace(/^@+/, "").toLocaleLowerCase("en-US");
+
+function toSafeKey(id) {
+  const encoded = id.replace(/[^a-z0-9_]/g, ch => "_x" + ch.charCodeAt(0).toString(16) + "_");
+  return encoded.slice(0, 38);
+}
+
+function parseHandleEntry(rawLine) {
+  const cleaned = String(rawLine || "").trim();
+  if (!cleaned) return null;
+  const parts = cleaned.split(":");
+  const id = normalize(parts[0]);
+  if (!id) return null;
+  let customLimit = null;
+  if (parts.length > 1 && parts[1].trim() !== "") {
+    const parsed = parseInt(parts[1].trim(), 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      customLimit = parsed;
+    }
+  }
+  return {
+    id,
+    customLimit,
+    raw: customLimit !== null ? `${id}:${customLimit}` : id
+  };
+}
+
+let rawEntries = [...ALLOWED_HANDLES].map(parseHandleEntry).filter(Boolean);
+let handles = [];
+let handleLimitMap = {};
+
+function rebuildHandleStructures(entries) {
+  rawEntries = entries;
+  handles = [];
+  handleLimitMap = {};
+  for (const item of entries) {
+    if (!handles.includes(item.id)) {
+      handles.push(item.id);
+    }
+    if (item.customLimit !== null) {
+      handleLimitMap[item.id] = item.customLimit;
+    }
+  }
+}
+rebuildHandleStructures(rawEntries);
+
+function getLimitForHandle(id) {
+  if (Object.prototype.hasOwnProperty.call(handleLimitMap, id)) {
+    return handleLimitMap[id];
+  }
+  return currentDefaultMaxUses;
+}
+
+// 로컬 백업 저장소 (오프라인/샌드박스 환경 대비)
+function getLocalKey() {
+  return `follower_gate_usage_v${currentResetEpoch}`;
+}
+function loadLocalMap() {
+  try {
+    const raw = localStorage.getItem(getLocalKey());
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        return { ...memoryUsageStore, ...parsed };
+      }
+    }
+  } catch (e) {}
+  return { ...memoryUsageStore };
+}
+function saveLocalMap(map) {
+  memoryUsageStore = { ...map };
+  try {
+    localStorage.setItem(getLocalKey(), JSON.stringify(map));
+  } catch (e) {}
+}
+
+// 서버 통합 카운터 (Abacus API) 호출 함수
+async function abacusGet(key) {
+  const res = await fetch(`https://abacus.jasoncameron.dev/get/${COUNTER_NAMESPACE}/${key}`, {
+    method: "GET",
+    cache: "no-store"
+  });
+  if (res.status === 404) return 0;
+  if (!res.ok) throw new Error("API status " + res.status);
+  const data = await res.json();
+  return typeof data.value === "number" ? data.value : 0;
+}
+
+async function abacusHit(key) {
+  const res = await fetch(`https://abacus.jasoncameron.dev/hit/${COUNTER_NAMESPACE}/${key}`, {
+    method: "GET",
+    cache: "no-store"
+  });
+  if (!res.ok) throw new Error("API status " + res.status);
+  const data = await res.json();
+  return typeof data.value === "number" ? data.value : 1;
+}
+
+async function getActiveCounterKey(id) {
+  const safe = toSafeKey(id);
+  const globalRstKey = `grst_${currentResetEpoch}`;
+  const handleRstKey = `hrst_${currentResetEpoch}_${safe}`;
+  const [gVer, hVer] = await Promise.all([
+    abacusGet(globalRstKey),
+    abacusGet(handleRstKey)
+  ]);
+  return `use_${currentResetEpoch}_g${gVer}_r${hVer}_${safe}`;
+}
+
+async function fetchGlobalUsedCount(id) {
+  try {
+    const activeKey = await getActiveCounterKey(id);
+    const remoteCount = await abacusGet(activeKey);
+    cachedCounts[id] = remoteCount;
+    return remoteCount;
+  } catch (err) {
+    const localMap = loadLocalMap();
+    const fallback = Number(localMap[id] || 0);
+    cachedCounts[id] = fallback;
+    return fallback;
+  }
+}
+
+async function incrementGlobalUsedCount(id) {
+  try {
+    const activeKey = await getActiveCounterKey(id);
+    const nextRemote = await abacusHit(activeKey);
+    cachedCounts[id] = nextRemote;
+    const localMap = loadLocalMap();
+    localMap[id] = nextRemote;
+    saveLocalMap(localMap);
+    return nextRemote;
+  } catch (err) {
+    const localMap = loadLocalMap();
+    const nextLocal = Number(localMap[id] || 0) + 1;
+    localMap[id] = nextLocal;
+    saveLocalMap(localMap);
+    cachedCounts[id] = nextLocal;
+    return nextLocal;
+  }
+}
+
+async function resetSingleHandleGlobal(id) {
+  const safe = toSafeKey(id);
+  const handleRstKey = `hrst_${currentResetEpoch}_${safe}`;
+  try {
+    await abacusHit(handleRstKey);
+  } catch (err) {}
+  const localMap = loadLocalMap();
+  delete localMap[id];
+  saveLocalMap(localMap);
+  cachedCounts[id] = 0;
+}
+
+async function resetAllHandlesGlobal() {
+  const globalRstKey = `grst_${currentResetEpoch}`;
+  try {
+    await abacusHit(globalRstKey);
+  } catch (err) {}
+  memoryUsageStore = {};
+  cachedCounts = {};
+  saveLocalMap({});
+}
+
+function showStatus(el, msg, type="") {
+  el.textContent = msg;
+  el.className = "status" + (type ? " " + type : "");
+}
+
+$("gateForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const id = normalize($("handle").value);
+  $("destination").classList.add("hidden");
+  if (!id) {
+    showStatus($("gateStatus"), "아이디를 입력해 주세요.", "error");
+    return;
+  }
+  if (!handles.includes(id)) {
+    showStatus($("gateStatus"), "목록에서 아이디를 찾지 못했어요. @를 빼고 다시 확인하거나 관리자에게 등록을 요청해 주세요.", "error");
+    return;
+  }
+
+  const submitBtn = $("submitBtn");
+  submitBtn.disabled = true;
+  showStatus($("gateStatus"), "접속 가능 횟수를 확인하고 있습니다...");
+
+  try {
+    const maxLimit = getLimitForHandle(id);
+    const usedBefore = await fetchGlobalUsedCount(id);
+
+    if (usedBefore >= maxLimit) {
+      showStatus(
+        $("gateStatus"),
+        `접속 제한 안내: @${id} 아이디의 허용 접속 횟수(${maxLimit}회)를 모두 사용하셨습니다.\n추가 접속이 필요하면 관리자에게 초기화를 요청해 주세요.`,
+        "error"
+      );
+      return;
+    }
+
+    const usedNow = await incrementGlobalUsedCount(id);
+    const remaining = Math.max(0, maxLimit - usedNow);
+    $("usageBadge").textContent = `@${id} · 접속 ${usedNow}/${maxLimit}회 (남은 횟수 ${remaining}회)`;
+    showStatus(
+      $("gateStatus"),
+      `확인 완료! 등록된 아이디입니다. (현재 접속 ${usedNow}/${maxLimit}회 · 남은 가능 횟수 ${remaining}회)`,
+      "success"
+    );
+    $("destination").classList.remove("hidden");
+    if (adminUnlocked) {
+      renderAdminUsageList();
+    }
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
+function renderAdminUsageList() {
+  const listEl = $("usageSummaryList");
+  const filterText = normalize($("searchHandleInput").value || "");
+  listEl.innerHTML = "";
+
+  const filtered = handles.filter(id => !filterText || id.includes(filterText));
+  if (filtered.length === 0) {
+    const emptyMsg = document.createElement("div");
+    emptyMsg.className = "small";
+    emptyMsg.style.color = "var(--muted)";
+    emptyMsg.textContent = "일치하는 아이디가 없습니다.";
+    listEl.appendChild(emptyMsg);
+    return;
+  }
+
+  filtered.forEach(id => {
+    const row = document.createElement("div");
+    row.className = "usage-item";
+    const limit = getLimitForHandle(id);
+    const known = Object.prototype.hasOwnProperty.call(cachedCounts, id) ? cachedCounts[id] : null;
+
+    const info = document.createElement("span");
+    info.textContent = known !== null
+      ? `@${id} — ${known} / ${limit}회 사용`
+      : `@${id} (허용 ${limit}회)`;
+
+    const btnGroup = document.createElement("div");
+    btnGroup.className = "usage-btns";
+
+    const checkBtn = document.createElement("button");
+    checkBtn.type = "button";
+    checkBtn.className = "tiny-btn";
+    checkBtn.textContent = "횟수 조회";
+    checkBtn.addEventListener("click", async () => {
+      checkBtn.disabled = true;
+      checkBtn.textContent = "조회 중...";
+      const cnt = await fetchGlobalUsedCount(id);
+      info.textContent = `@${id} — ${cnt} / ${limit}회 사용`;
+      checkBtn.textContent = "횟수 조회";
+      checkBtn.disabled = false;
+    });
+
+    const resetBtn = document.createElement("button");
+    resetBtn.type = "button";
+    resetBtn.className = "tiny-btn reset";
+    resetBtn.textContent = "초기화";
+    resetBtn.addEventListener("click", async () => {
+      resetBtn.disabled = true;
+      resetBtn.textContent = "처리 중...";
+      await resetSingleHandleGlobal(id);
+      info.textContent = `@${id} — 0 / ${limit}회 사용`;
+      resetBtn.textContent = "초기화 완료";
+      showStatus($("adminStatus"), `@${id} 아이디의 접속 횟수를 모든 브라우저에서 0회로 초기화했습니다.`, "success");
+      setTimeout(() => {
+        resetBtn.textContent = "초기화";
+        resetBtn.disabled = false;
+      }, 1000);
+    });
+
+    btnGroup.appendChild(checkBtn);
+    btnGroup.appendChild(resetBtn);
+    row.appendChild(info);
+    row.appendChild(btnGroup);
+    listEl.appendChild(row);
+  });
+}
+
+$("searchHandleInput").addEventListener("input", () => {
+  if (adminUnlocked) {
+    renderAdminUsageList();
+  }
+});
+
+$("unlock").addEventListener("click", () => {
+  if ($("adminPass").value !== ADMIN_PASSWORD) {
+    adminUnlocked = false;
+    $("adminPanel").classList.add("hidden");
+    showStatus($("adminGateStatus"), "관리자 비밀번호가 맞지 않습니다. 편집 기능은 열리지 않았어요.", "error");
+    return;
+  }
+  adminUnlocked = true;
+  $("defaultLimitInput").value = String(currentDefaultMaxUses);
+  $("handles").value = rawEntries.map(item => item.raw).join("\n");
+  renderAdminUsageList();
+  $("adminPanel").classList.remove("hidden");
+  $("adminGateStatus").textContent = "";
+  showStatus($("adminStatus"), "편집할 수 있어요. 각 아이디 옆의 [초기화]를 누르면 즉시 모든 기기에서 횟수가 리셋됩니다.", "success");
+});
+
+$("resetAllCountsBtn").addEventListener("click", async () => {
+  if (!adminUnlocked) return;
+  const btn = $("resetAllCountsBtn");
+  btn.disabled = true;
+  btn.textContent = "전체 초기화 중...";
+  await resetAllHandlesGlobal();
+  currentResetEpoch += 1;
+  renderAdminUsageList();
+  btn.disabled = false;
+  btn.textContent = "전체 아이디 접속 횟수 일괄 초기화";
+  showStatus(
+    $("adminStatus"),
+    "전체 아이디의 접속 횟수가 모든 브라우저에서 0회로 초기화되었습니다.",
+    "success"
+  );
+});
+
+$("cancelAdmin").addEventListener("click", () => {
+  adminUnlocked = false;
+  $("adminPanel").classList.add("hidden");
+  $("adminPass").value = "";
+  $("adminGateStatus").textContent = "";
+});
+
+$("saveDownload").addEventListener("click", () => {
+  if (!adminUnlocked) {
+    showStatus($("adminStatus"), "먼저 올바른 관리자 비밀번호로 편집을 열어 주세요.", "error");
+    return;
+  }
+  const parsedDefault = parseInt($("defaultLimitInput").value, 10);
+  currentDefaultMaxUses = !isNaN(parsedDefault) && parsedDefault > 0 ? parsedDefault : 3;
+
+  const parsedEntries = [];
+  const seen = new Set();
+  for (const line of $("handles").value.split(/\r?\n/)) {
+    const entry = parseHandleEntry(line);
+    if (entry && !seen.has(entry.id)) {
+      seen.add(entry.id);
+      parsedEntries.push(entry);
+    }
+  }
+  rebuildHandleStructures(parsedEntries);
+  renderAdminUsageList();
+
+  const serializedList = parsedEntries.map(item => item.raw);
+  let htmlSource = "<!doctype html>\n" + document.documentElement.outerHTML;
+  htmlSource = htmlSource
+    .replace(
+      /const DEFAULT_MAX_USES = \d+;/,
+      "const DEFAULT_MAX_USES = " + currentDefaultMaxUses + ";"
+    )
+    .replace(
+      /const RESET_EPOCH = \d+;/,
+      "const RESET_EPOCH = " + currentResetEpoch + ";"
+    )
+    .replace(
+      /const ALLOWED_HANDLES = \[[\s\S]*?\];/,
+      "const ALLOWED_HANDLES = " + JSON.stringify(serializedList, null, 2) + ";"
+    );
+
+  const blob = new Blob([htmlSource], {type:"text/html;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "index.html";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  showStatus(
+    $("adminStatus"),
+    `다운로드를 요청했어요. 내려받은 index.html을 GitHub 저장소에 덮어 올리면 새 목록과 접속 횟수 설정(기본 ${currentDefaultMaxUses}회)이 배포됩니다. 등록 아이디 ${serializedList.length}개.`,
+    "success"
+  );
+});
+</script>
+</body></html>
