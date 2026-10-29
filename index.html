@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>친구 전용 링크</title>
+<style>
+:root{color-scheme:light;--bg:#f6f4fb;--card:#fff;--ink:#282438;--muted:#777187;--accent:#7865c8;--line:#e8e3f2;--bad:#b3261e;--good:#287a4b}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(140deg,#f4efff,#f9f7fc 55%,#f2f5ff);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);display:grid;place-items:center;padding:20px}
+main{width:min(100%,560px)}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:clamp(20px,5vw,32px);box-shadow:0 16px 50px #43356b12}
+h1{font-size:1.55rem;margin:0 0 8px}p{line-height:1.65;color:var(--muted)}label{display:block;font-weight:650;margin:18px 0 8px}
+input,textarea{width:100%;border:1px solid #d8d1e8;border-radius:12px;padding:13px 14px;font:inherit;color:var(--ink);background:white}
+textarea{min-height:150px;resize:vertical}button,.linkbtn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
+button.primary,.linkbtn{background:var(--accent);color:white}button.secondary{background:#eeeaf7;color:var(--ink)}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #b7a8f2;outline-offset:2px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.status{margin-top:16px;padding:12px 14px;border-radius:12px;background:#f4f1fa;color:var(--ink);white-space:pre-wrap}.status.error{background:#fff0ef;color:var(--bad)}.status.success{background:#edf8f0;color:var(--good)}
+.hidden{display:none!important}.small{font-size:.86rem}.divider{border:0;border-top:1px solid var(--line);margin:24px 0}.admin-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.tag{font-size:.76rem;background:#eeeaf7;padding:5px 9px;border-radius:99px;color:#5d4ca4}
+</style>
+</head>
+<body>
+<main>
+<section class="card" id="gate">
+  <div class="tag">FOLLOWER CHECK</div>
+  <h1>친구 전용 링크</h1>
+  <p>등록된 X 아이디를 입력해 주세요. @는 붙여도 되고 생략해도 됩니다.</p>
+  <form id="gateForm">
+    <label for="handle">X 아이디</label>
+    <input id="handle" autocomplete="username" placeholder="@your_id" required="" maxlength="80">
+    <div class="actions"><button class="primary" type="submit">확인하고 입장하기</button></div>
+  </form>
+  <div id="gateStatus" class="status" role="status" aria-live="polite">등록된 아이디인지 확인합니다.</div>
+  <div id="destination" class="hidden">
+    <p>아이디가 목록에 있어요.</p>
+    <a class="linkbtn" href="https://vudso3-coder.github.io/talkstory/" target="_blank" rel="noopener noreferrer">톡스토리 열기 ↗</a>
+  </div>
+  <p class="small">아이디가 목록에 없으면 관리자에게 등록을 요청해 주세요.</p>
+  <hr class="divider">
+  <details open="">
+    <summary>관리자: 팔로워 목록 관리</summary>
+    <p class="small">X 아이디를 한 줄에 하나씩 입력하세요. 수정한 뒤 아래 버튼으로 새 HTML 파일을 내려받아 GitHub Pages에 다시 올리면 모두에게 반영됩니다.</p>
+    <label for="adminPass">관리자 비밀번호</label>
+    <input id="adminPass" type="password" placeholder="관리자 비밀번호">
+    <div class="actions"><button id="unlock" class="secondary" type="button">관리자 편집 열기</button></div>
+    <div id="adminGateStatus" class="status" role="status" aria-live="polite"></div>
+    <div id="adminPanel" class="">
+      <label for="handles">허용할 X 아이디 (한 줄에 하나씩)</label>
+      <textarea id="handles" spellcheck="false" placeholder="example_id
+another_id"></textarea>
+      <div class="actions">
+        <button id="saveDownload" class="primary" type="button">목록 반영한 HTML 다운로드</button>
+        <button id="cancelAdmin" class="secondary" type="button">닫기</button>
+      </div>
+      <div id="adminStatus" class="status success" role="status" aria-live="polite">편집할 수 있어요. 저장 후 새 HTML을 다운로드하세요.</div>
+    </div>
+  </details>
+</section>
+</main>
+<script>
+/*
+  설정 안내:
+  1) 아래 ADMIN_PASSWORD를 본인이 사용할 값으로 바꾸세요.
+  2) ALLOWED_HANDLES에 아이디를 한 줄씩 넣을 수도 있지만, 페이지의 관리자 메뉴에서 입력 후
+     "목록 반영한 HTML 다운로드"를 누르면 목록이 포함된 새 HTML이 만들어집니다.
+  주의: 서버 없는 정적 HTML이라 목록과 비밀번호는 소스에서 확인/우회할 수 있습니다.
+*/
+const ADMIN_PASSWORD = "myang0426";
+const ALLOWED_HANDLES = [
+  "vo8gpxp3x2ragrb",
+  "bboldda99_",
+  "bboldda99",
+  "56shiro7",
+  "boguri5",
+  "97z44",
+  "bllk_kiwi",
+  "love_mihya1225",
+  "o0mi_yasan",
+  "nagichangman",
+  "nice_122541",
+  "itoshi_love_sio",
+  "icherishyou0219",
+  "muuuue1234",
+  "muri1vm",
+  "melon_mmd",
+  "1xurin9",
+  "shushu_hioring",
+  "divineananke",
+  "iyrw3k",
+  "wsmsx",
+  "kimbaki0815",
+  "googoo_8121",
+  "bbbaaaaaam",
+  "nisu_lock",
+  "chikk_1010",
+  "rincherrynyan",
+  "my4ngo1st",
+  "min332332",
+  "fordezember25",
+  "26mkbday",
+  "*ahwlgk",
+  "feqdmt",
+  "ring2_1223",
+  "o3vio",
+  "kiikun_chan",
+  "yoru090917",
+  "rnchinchung",
+  "chyifrdo",
+  "ue_022",
+  "ivoryro0",
+  "gyoong9evo",
+  "graziosoja8396",
+  "s0lbangwul",
+  "s0namu_s01",
+  "qkxopr",
+  "lynnrin1oxo",
+  "hunyong190*",
+  "mylov_s2",
+  "bluelock_pwc",
+  "bururo8008_cham",
+  "toman8008_cham",
+  "juju8008_cham",
+  "blulo_goods",
+  "test0000"
+];
+const TARGET_URL = "https://vudso3-coder.github.io/talkstory/";
+let adminUnlocked = false;
+const $ = id => document.getElementById(id);
+$("adminPanel").classList.add("hidden");
+const normalize = s => s.trim().replace(/^@+/, "").toLocaleLowerCase("en-US");
+let handles = [...ALLOWED_HANDLES].map(normalize).filter(Boolean);
+function showStatus(el, msg, type="") { el.textContent=msg; el.className="status"+(type ? " "+type : ""); }
+$("gateForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const id = normalize($("handle").value);
+  $("destination").classList.add("hidden");
+  if (!id) { showStatus($("gateStatus"), "아이디를 입력해 주세요.", "error"); return; }
+  if (handles.includes(id)) {
+    showStatus($("gateStatus"), "확인 완료! 등록된 아이디입니다.", "success");
+    $("destination").classList.remove("hidden");
+  } else {
+    showStatus($("gateStatus"), "목록에서 아이디를 찾지 못했어요. @를 빼고 다시 확인하거나 관리자에게 등록을 요청해 주세요.", "error");
+  }
+});
+$("unlock").addEventListener("click", () => {
+  if ($("adminPass").value !== ADMIN_PASSWORD) {
+    adminUnlocked = false;
+    $("adminPanel").classList.add("hidden");
+    showStatus($("adminGateStatus"), "관리자 비밀번호가 맞지 않습니다. 편집 기능은 열리지 않았어요.", "error");
+    return;
+  }
+  adminUnlocked = true;
+  $("handles").value = handles.join("\n");
+  $("adminPanel").classList.remove("hidden");
+  $("adminGateStatus").textContent = "";
+  showStatus($("adminStatus"), "편집할 수 있어요. 저장 후 새 HTML을 다운로드하세요.", "success");
+});
+$("cancelAdmin").addEventListener("click", () => {
+  adminUnlocked = false;
+  $("adminPanel").classList.add("hidden");
+  $("adminPass").value = "";
+  $("adminGateStatus").textContent = "";
+});
+$("saveDownload").addEventListener("click", () => {
+  if (!adminUnlocked) { showStatus($("adminStatus"), "먼저 올바른 관리자 비밀번호로 편집을 열어 주세요.", "error"); return; }
+  const list = [...new Set($("handles").value.split(/\r?\n/).map(normalize).filter(Boolean))];
+  const source = "<!doctype html>\n" + document.documentElement.outerHTML.replace(
+    /const ALLOWED_HANDLES = \[[\s\S]*?\];/,
+    "const ALLOWED_HANDLES = " + JSON.stringify(list, null, 2) + ";"
+  );
+  const blob = new Blob([source], {type:"text/html;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download="index.html"; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  handles = list;
+  showStatus($("adminStatus"), "다운로드를 요청했어요. 내려받은 index.html을 GitHub 저장소에 덮어 올리면 새 목록이 배포됩니다. 등록 아이디 "+list.length+"개.", "success");
+});
+</script>
+
+
+</body></html>
